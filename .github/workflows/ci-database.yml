@@ -1,0 +1,72 @@
+name: CI - Database
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'database/**'
+      - '.github/workflows/ci-database.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'database/**'
+      - '.github/workflows/ci-database.yml'
+
+jobs:
+  validate-migrations:
+    name: Apply migrations to a clean database
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: taskforge
+          POSTGRES_PASSWORD: devpassword
+          POSTGRES_DB: taskforge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U taskforge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Apply all migrations in order (fails immediately on any SQL error)
+        run: |
+          for f in database/migrations/*.sql; do
+            echo "Applying $f"
+            PGPASSWORD=devpassword psql -v ON_ERROR_STOP=1 -h localhost -U taskforge -d taskforge -f "$f"
+          done
+
+      - name: Print resulting schema (informational, not a pass/fail gate)
+        run: |
+          echo "Tables created:"
+          PGPASSWORD=devpassword psql -h localhost -U taskforge -d taskforge -c "\dt"
+          echo ""
+          echo "Functions and procedures created:"
+          PGPASSWORD=devpassword psql -h localhost -U taskforge -d taskforge \
+            -c "SELECT proname, CASE prokind WHEN 'f' THEN 'function' WHEN 'p' THEN 'procedure' END AS kind FROM pg_proc WHERE pronamespace = 'public'::regnamespace ORDER BY proname;"
+
+      - name: Sanity check - at least one table and one function exist
+        run: |
+          TABLE_COUNT=$(PGPASSWORD=devpassword psql -h localhost -U taskforge -d taskforge -tAc \
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';")
+          FUNC_COUNT=$(PGPASSWORD=devpassword psql -h localhost -U taskforge -d taskforge -tAc \
+            "SELECT COUNT(*) FROM pg_proc WHERE pronamespace = 'public'::regnamespace;")
+
+          echo "Tables: $TABLE_COUNT | Functions/Procedures: $FUNC_COUNT"
+
+          if [ "$TABLE_COUNT" -eq 0 ]; then
+            echo "No tables were created — migrations likely did not run."
+            exit 1
+          fi
+
+          if [ "$FUNC_COUNT" -eq 0 ]; then
+            echo "No functions/procedures were created — migrations likely did not run."
+            exit 1
+          fi
