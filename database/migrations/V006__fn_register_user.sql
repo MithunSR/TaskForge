@@ -8,6 +8,7 @@
 --               concurrent registrations so two simultaneous
 --               signups can never both become Admin.
 -- =====================================================
+
 CREATE OR REPLACE FUNCTION fn_register_user(
     p_name TEXT, p_email TEXT, p_password_hash TEXT
 ) RETURNS TABLE (id UUID, name TEXT, email TEXT, role_name TEXT) AS $$
@@ -28,7 +29,9 @@ BEGIN
     RETURN QUERY
     INSERT INTO users (name, email, password_hash, role_id)
     VALUES (p_name, p_email, p_password_hash, v_role_id)
-    RETURNING users.id, users.name, users.email,
-              (SELECT roles.name FROM roles WHERE roles.id = v_role_id);
+    RETURNING users.id,
+              users.name::TEXT,
+              users.email::TEXT,
+              (SELECT roles.name::TEXT FROM roles WHERE roles.id = v_role_id);
 END;
 $$ LANGUAGE plpgsql;

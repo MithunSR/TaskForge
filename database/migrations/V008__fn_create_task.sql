@@ -13,6 +13,6 @@ BEGIN
     RETURN QUERY
     INSERT INTO tasks (title, description, status, due_date, owner_id)
     VALUES (p_title, p_description, p_status::task_status, p_due_date, p_owner_id)
-    RETURNING tasks.id, tasks.title, tasks.description, tasks.status::TEXT, tasks.due_date, tasks.owner_id;
+    RETURNING tasks.id, tasks.title::TEXT, tasks.description, tasks.status::TEXT, tasks.due_date, tasks.owner_id;
 END;
 $$ LANGUAGE plpgsql;

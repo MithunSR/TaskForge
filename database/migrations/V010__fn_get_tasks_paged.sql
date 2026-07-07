@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION fn_get_tasks_paged(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT t.id, t.title, t.description, t.status::TEXT, t.due_date, t.owner_id,
+    SELECT t.id, t.title::TEXT, t.description, t.status::TEXT, t.due_date, t.owner_id,
            COUNT(*) OVER() AS total_count
     FROM tasks t
     WHERE (p_owner_id IS NULL OR t.owner_id = p_owner_id)
