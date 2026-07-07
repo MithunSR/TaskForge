@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION fn_get_user_by_email(p_email TEXT)
 RETURNS TABLE (id UUID, name TEXT, email TEXT, password_hash TEXT, role_name TEXT) AS $$
 BEGIN
     RETURN QUERY
-    SELECT u.id, u.name, u.email, u.password_hash, r.name
+    SELECT u.id, u.name::TEXT, u.email::TEXT, u.password_hash, r.name::TEXT
     FROM users u
     JOIN roles r ON r.id = u.role_id
     WHERE u.email = p_email;
