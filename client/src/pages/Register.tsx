@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { TextField, Button, Alert, Stack, Link, Typography } from '@mui/material';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { AuthLayout } from '../components/AuthLayout';
 
 export default function Register() {
@@ -21,8 +21,9 @@ export default function Register() {
     try {
       await register(name, email, password);
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Registration failed.';
+      setError(message);
     } finally {
       setLoading(false);
     }
