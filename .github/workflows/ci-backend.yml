@@ -1,0 +1,68 @@
+name: CI - Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - 'tests/**'
+      - 'database/**'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'api/**'
+      - 'tests/**'
+      - 'database/**'
+      - '.github/workflows/ci-backend.yml'
+
+jobs:
+  build-and-test:
+    name: Build, lint, and test .NET API
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: taskforge
+          POSTGRES_PASSWORD: devpassword
+          POSTGRES_DB: taskforge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U taskforge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Apply database migrations
+        run: |
+          for f in database/migrations/*.sql; do
+            echo "Applying $f"
+            PGPASSWORD=devpassword psql -v ON_ERROR_STOP=1 -h localhost -U taskforge -d taskforge -f "$f"
+          done
+
+      - name: Restore dependencies
+        run: dotnet restore api/TaskForge.sln
+
+      - name: Build (warnings as errors)
+        run: dotnet build api/TaskForge.sln --no-restore /warnaserror
+
+      - name: Run tests
+        run: dotnet test api/TaskForge.sln --no-build --verbosity normal
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=taskforge;Username=taskforge;Password=devpassword"
+          Jwt__Secret: "ci-test-secret-key-at-least-32-characters-long-for-testing"
+          Jwt__Issuer: "TaskForgeApi"
+          Jwt__Audience: "TaskForgeClient"
+          Jwt__ExpiryMinutes: "60"

@@ -11,10 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskForge.Domain", "TaskFor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskForge.Infrastructure", "TaskForge.Infrastructure\TaskForge.Infrastructure.csproj", "{E0B03FFB-CE72-4012-A87F-7134B4EB83CD}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TaskForge.Tests", "TaskForge.Tests", "{5BB9F501-E510-C80D-A2E6-83133BE921F7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskForge.Tests", "TaskForge.Tests\TaskForge.Tests\TaskForge.Tests.csproj", "{25BDFF63-E37E-4152-BB3D-D285B2792747}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskForge.Tests", "TaskForge.Tests\TaskForge.Tests.csproj", "{813AB95B-1E32-4911-BCFB-EDCF11F07646}"
 EndProject
 Global
@@ -75,18 +71,6 @@ Global
 		{E0B03FFB-CE72-4012-A87F-7134B4EB83CD}.Release|x64.Build.0 = Release|Any CPU
 		{E0B03FFB-CE72-4012-A87F-7134B4EB83CD}.Release|x86.ActiveCfg = Release|Any CPU
 		{E0B03FFB-CE72-4012-A87F-7134B4EB83CD}.Release|x86.Build.0 = Release|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Debug|x64.Build.0 = Debug|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Debug|x86.Build.0 = Debug|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Release|Any CPU.Build.0 = Release|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Release|x64.ActiveCfg = Release|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Release|x64.Build.0 = Release|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Release|x86.ActiveCfg = Release|Any CPU
-		{25BDFF63-E37E-4152-BB3D-D285B2792747}.Release|x86.Build.0 = Release|Any CPU
 		{813AB95B-1E32-4911-BCFB-EDCF11F07646}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{813AB95B-1E32-4911-BCFB-EDCF11F07646}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{813AB95B-1E32-4911-BCFB-EDCF11F07646}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -104,6 +88,5 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{25BDFF63-E37E-4152-BB3D-D285B2792747} = {5BB9F501-E510-C80D-A2E6-83133BE921F7}
 	EndGlobalSection
 EndGlobal
