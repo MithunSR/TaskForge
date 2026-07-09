@@ -18,6 +18,7 @@ import type { UserSummary } from '../api/UsersApi';
 import { TaskFormDialog } from '../components/TaskFormDialog';
 import { DeleteConfirmDialog } from '../components/DeleteConfirmationDialog';
 import { STATUS_COLORS } from '../constants/taskStatusColors';
+import { useTaskHub } from '../hooks/useTaskHub';
 
 export default function Dashboard() {
   const { role, logout } = useAuth();
@@ -39,6 +40,23 @@ export default function Dashboard() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
   const [deletingTask, setDeletingTask] = useState<TaskItem | null>(null);
+
+
+  useTaskHub({
+    onTaskCreated: (task) => {
+      // Only add it to the visible list if it matches current filters/ownership
+      setTasks((prev) => {
+        const alreadyThere = prev.some((t) => t.id === task.id);
+        return alreadyThere ? prev : [task, ...prev];
+      });
+    },
+    onTaskUpdated: (task) => {
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    },
+    onTaskDeleted: ({ taskId }) => {
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    },
+  });
 
   // Load filter option lists once (statuses always; users only if Admin)
   useEffect(() => {
