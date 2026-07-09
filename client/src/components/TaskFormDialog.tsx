@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import type { TaskItem, TaskStatus } from '../api/tasksApi';
 import { tasksApi } from '../api/tasksApi';
-import { usersApi} from '../api/UsersApi';
+import { usersApi } from '../api/UsersApi';
 import type { UserSummary } from '../api/UsersApi';
 import { useAuth } from '../context/useAuth';
 
@@ -17,79 +17,68 @@ interface Props {
 }
 
 export function TaskFormDialog({ open, task, onClose, onSubmit }: Props) {
+  if (!open) return null;
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      {/* key forces a fresh mount whenever we switch between editing different
+          tasks, or between edit and create — this replaces syncing props into
+          state via an effect, which is the pattern React recommends instead. */}
+      <TaskFormBody key={task?.id ?? 'new'} task={task} onClose={onClose} onSubmit={onSubmit} />
+    </Dialog>
+  );
+}
+
+function TaskFormBody({ task, onClose, onSubmit }: Omit<Props, 'open'>) {
   const { role } = useAuth();
   const isAdmin = role === 'Admin';
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [statusId, setStatusId] = useState<number>(0);
-  const [dueDate, setDueDate] = useState('');
-  const [ownerId, setOwnerId] = useState('');
+  // Initializers run once per mount. Since the parent remounts this component
+  // via `key` whenever `task` changes, these always start correctly synced —
+  // no effect needed to copy props into state.
+  const [title, setTitle] = useState(task?.title ?? '');
+  const [description, setDescription] = useState(task?.description ?? '');
+  const [statusId, setStatusId] = useState(task?.statusId ?? 0);
+  const [dueDate, setDueDate] = useState(task?.dueDate ? task.dueDate.split('T')[0] : '');
+  const [ownerId, setOwnerId] = useState(task?.ownerId ?? '');
 
   const [statuses, setStatuses] = useState<TaskStatus[]>([]);
   const [users, setUsers] = useState<UserSummary[]>([]);
-  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Legitimate effect use: subscribes to the API and calls setState only
+  // inside the async callback, after data actually arrives — not synchronously
+  // in the effect body itself.
   useEffect(() => {
-  if (!open) return;
+    let cancelled = false;
 
-  let cancelled = false;
+    async function loadOptions() {
+      try {
+        const statusPromise = tasksApi.getStatuses();
+        const usersPromise = isAdmin ? usersApi.list() : Promise.resolve([]);
+        const [statusResult, usersResult] = await Promise.all([statusPromise, usersPromise]);
+        if (cancelled) return;
 
-  async function loadOptions() {
-    setLoadingOptions(true);
-    setError(null);
-    try {
-      const statusPromise = tasksApi.getStatuses();
-      const usersPromise = isAdmin ? usersApi.list() : Promise.resolve([]);
-      const [statusResult, usersResult] = await Promise.all([statusPromise, usersPromise]);
-      if (!cancelled) {
         setStatuses(statusResult);
         setUsers(usersResult);
+
+        if (!task && statusResult.length > 0) {
+          setStatusId(statusResult[0].id);
+        }
+      } catch {
+        if (!cancelled) setError('Failed to load form options. Please try again.');
+      } finally {
+        if (!cancelled) setLoadingOptions(false);
       }
-    } catch {
-      if (!cancelled) setError('Failed to load form options. Please try again.');
-    } finally {
-      if (!cancelled) setLoadingOptions(false);
     }
-  }
 
-  loadOptions();
-
-  return () => {
-    cancelled = true;
-  };
-}, [open, isAdmin]);
-
-  // Populate fields when editing, reset when creating
- useEffect(() => {
-  if (!open) return;
-
-  if (task) {
-    setTitle(task.title);
-    setDescription(task.description ?? '');
-    setStatusId(task.statusId);
-    setDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
-    setOwnerId(task.ownerId);
-  } else {
-    setTitle('');
-    setDescription('');
-    setStatusId(0);
-    setDueDate('');
-    setOwnerId('');
-  }
-}, [task, open]);
-
-  // Default statusId to the first available status once statuses load, for new tasks
-useEffect(() => {
-  function setDefaultStatus() {
-    if (!task && statuses.length > 0 && statusId === 0) {
-      setStatusId(statuses[0].id);
-    }
-  }
-  setDefaultStatus();
-}, [statuses, task, statusId]);
+    loadOptions();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin, task]);
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -107,17 +96,17 @@ useEffect(() => {
         ownerId: isAdmin && ownerId ? ownerId : undefined,
       });
       onClose();
-   } catch (err) {
-  const message = err instanceof Error ? err.message : 'Failed to save task.';
-  const apiMessage = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-  setError(apiMessage || message);
-} finally {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save task.';
+      const apiMessage = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setError(apiMessage || message);
+    } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <>
       <DialogTitle>{task ? 'Edit task' : 'New task'}</DialogTitle>
       <DialogContent>
         {loadingOptions ? (
@@ -126,7 +115,6 @@ useEffect(() => {
           </Box>
         ) : (
           <Stack spacing={2} sx={{ mt: 1 }}>
-            {error && <TextField error helperText={error} sx={{ display: 'none' }} />}
             {error && <div style={{ color: '#d32f2f', fontSize: 14 }}>{error}</div>}
 
             <TextField
@@ -193,6 +181,6 @@ useEffect(() => {
           {saving ? 'Saving…' : 'Save task'}
         </Button>
       </DialogActions>
-    </Dialog>
+    </>
   );
 }
