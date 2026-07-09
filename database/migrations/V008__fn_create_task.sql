@@ -7,12 +7,14 @@
 --               in a single round trip.
 -- =====================================================
 CREATE OR REPLACE FUNCTION fn_create_task(
-    p_title TEXT, p_description TEXT, p_status TEXT, p_due_date DATE, p_owner_id UUID
-) RETURNS TABLE (id UUID, title TEXT, description TEXT, status TEXT, due_date DATE, owner_id UUID) AS $$
+    p_title TEXT, p_description TEXT, p_status_id INT, p_due_date DATE, p_owner_id UUID
+) RETURNS TABLE (id UUID, title TEXT, description TEXT, status_id INT, status_name TEXT, due_date DATE, owner_id UUID) AS $$
 BEGIN
     RETURN QUERY
-    INSERT INTO tasks (title, description, status, due_date, owner_id)
-    VALUES (p_title, p_description, p_status::task_status, p_due_date, p_owner_id)
-    RETURNING tasks.id, tasks.title::TEXT, tasks.description, tasks.status::TEXT, tasks.due_date, tasks.owner_id;
+    INSERT INTO tasks (title, description, status_id, due_date, owner_id)
+    VALUES (p_title, p_description, p_status_id, p_due_date, p_owner_id)
+    RETURNING tasks.id, tasks.title::TEXT, tasks.description, tasks.status_id,
+              (SELECT ts.name::TEXT FROM task_statuses ts WHERE ts.id = tasks.status_id),
+              tasks.due_date, tasks.owner_id;
 END;
 $$ LANGUAGE plpgsql;

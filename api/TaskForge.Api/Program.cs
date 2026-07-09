@@ -7,6 +7,7 @@ using TaskForge.Infrastructure.Auth;
 using TaskForge.Infrastructure.Data;
 using TaskForge.Infrastructure.Repositories;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ---- Configuration ----
@@ -18,11 +19,14 @@ builder.Services.AddSingleton<IDbConnectionFactory>(new NpgsqlConnectionFactory(
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITaskRepository ,TaskRepository>();
+builder.Services.AddScoped<ITaskService, TaskService>();
 
 // ---- Authentication ----
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;   // ← add this line
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -56,6 +60,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<TaskForge.Api.Middleware.GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

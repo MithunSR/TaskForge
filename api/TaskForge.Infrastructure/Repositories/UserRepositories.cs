@@ -29,4 +29,12 @@ public class UserRepository : IUserRepository
               FROM fn_get_user_by_email(@Email)",
             new { Email = email });
     }
+    public async Task<List<User>> GetAllAsync()
+    {
+        using var connection = _factory.CreateConnection();
+        var users = await connection.QueryAsync<User>(
+            @"SELECT id AS ""Id"", name AS ""Name"", email AS ""Email"", role_name AS ""RoleName""
+              FROM fn_get_all_users()");
+        return users.ToList();
+    }
 }
