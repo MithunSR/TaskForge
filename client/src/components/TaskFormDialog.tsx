@@ -32,48 +32,64 @@ export function TaskFormDialog({ open, task, onClose, onSubmit }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load dropdown options fresh every time the dialog opens
   useEffect(() => {
-    if (!open) return;
+  if (!open) return;
+
+  let cancelled = false;
+
+  async function loadOptions() {
     setLoadingOptions(true);
     setError(null);
-
-    const loadPromises: Promise<void>[] = [
-      tasksApi.getStatuses().then(setStatuses),
-    ];
-
-    if (isAdmin) {
-      loadPromises.push(usersApi.list().then(setUsers));
+    try {
+      const statusPromise = tasksApi.getStatuses();
+      const usersPromise = isAdmin ? usersApi.list() : Promise.resolve([]);
+      const [statusResult, usersResult] = await Promise.all([statusPromise, usersPromise]);
+      if (!cancelled) {
+        setStatuses(statusResult);
+        setUsers(usersResult);
+      }
+    } catch {
+      if (!cancelled) setError('Failed to load form options. Please try again.');
+    } finally {
+      if (!cancelled) setLoadingOptions(false);
     }
+  }
 
-    Promise.all(loadPromises)
-      .catch(() => setError('Failed to load form options. Please try again.'))
-      .finally(() => setLoadingOptions(false));
-  }, [open, isAdmin]);
+  loadOptions();
+
+  return () => {
+    cancelled = true;
+  };
+}, [open, isAdmin]);
 
   // Populate fields when editing, reset when creating
-  useEffect(() => {
-    if (task) {
-      setTitle(task.title);
-      setDescription(task.description ?? '');
-      setStatusId(task.statusId);
-      setDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
-      setOwnerId(task.ownerId);
-    } else {
-      setTitle('');
-      setDescription('');
-      setStatusId(0);
-      setDueDate('');
-      setOwnerId('');
-    }
-  }, [task, open]);
+ useEffect(() => {
+  if (!open) return;
+
+  if (task) {
+    setTitle(task.title);
+    setDescription(task.description ?? '');
+    setStatusId(task.statusId);
+    setDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
+    setOwnerId(task.ownerId);
+  } else {
+    setTitle('');
+    setDescription('');
+    setStatusId(0);
+    setDueDate('');
+    setOwnerId('');
+  }
+}, [task, open]);
 
   // Default statusId to the first available status once statuses load, for new tasks
-  useEffect(() => {
+useEffect(() => {
+  function setDefaultStatus() {
     if (!task && statuses.length > 0 && statusId === 0) {
       setStatusId(statuses[0].id);
     }
-  }, [statuses, task, statusId]);
+  }
+  setDefaultStatus();
+}, [statuses, task, statusId]);
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -91,9 +107,11 @@ export function TaskFormDialog({ open, task, onClose, onSubmit }: Props) {
         ownerId: isAdmin && ownerId ? ownerId : undefined,
       });
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save task.');
-    } finally {
+   } catch (err) {
+  const message = err instanceof Error ? err.message : 'Failed to save task.';
+  const apiMessage = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+  setError(apiMessage || message);
+} finally {
       setSaving(false);
     }
   };

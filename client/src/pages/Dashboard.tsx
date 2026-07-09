@@ -69,10 +69,12 @@ export default function Dashboard() {
     }
   }, [page, statusFilter, ownerFilter, isAdmin]);
 
-  useEffect(() => {
+ useEffect(() => {
+  function run() {
     loadTasks();
-  }, [loadTasks]);
-
+  }
+  run();
+}, [loadTasks]);
   const handleSave = async (data: { title: string; description: string; statusId: number; dueDate: string; ownerId?: string }) => {
     if (editingTask) {
       await tasksApi.update(editingTask.id, data);
