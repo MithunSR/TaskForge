@@ -198,7 +198,7 @@ Import both files from `docs/`:
 - `TaskForge.postman_collection.json`
 - `TaskForge.postman_environment.json`
 
-The collection covers every implemented endpoint (auth, tasks, users) and includes scripts that automatically capture the JWT token and task IDs between requests, so the reviewer can run through the full flow with minimal manual setup — set the active environment, run **Register**, then any other request.
+The collection covers every implemented endpoint (auth, tasks, users) and includes scripts that automatically capture the JWT token and task IDs between requests, so  can run through the full flow with minimal manual setup — set the active environment, run **Register**, then any other request.
 
 ---
 
