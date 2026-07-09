@@ -31,6 +31,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.MapInboundClaims = false;   // ← add this line
+        options.MapInboundClaims = false;   // ← add this line
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -65,6 +66,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<TaskForge.Api.Middleware.GlobalExceptionMiddleware>();
 
 app.UseMiddleware<TaskForge.Api.Middleware.GlobalExceptionMiddleware>();
 
